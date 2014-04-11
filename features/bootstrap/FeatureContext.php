@@ -16,12 +16,17 @@ use Behat\Gherkin\Node\PyStringNode,
 
 /**
  * Features context.
+ * @author Lohan Bodevan <lohan.bodevan@gmail.com>
  */
 class FeatureContext extends BehatContext
 {
-    protected $file;
-    protected $fileSize;
 
+    protected $file;
+    protected $dir;
+    protected $fileSize;
+    protected $return;
+    protected $maxFileSize;
+    
     /**
      * Initializes context.
      * Every scenario gets it's own context object.
@@ -30,44 +35,49 @@ class FeatureContext extends BehatContext
      */
     public function __construct(array $parameters)
     {
-        $this->file = "img/imagem.jpeg";
-        $this->fileSize = 0;
+        $this->maxFileSize = 700 * 128;
     }
 
     /**
-     * @Given /^file is in directory$/
+     * @Given /^directory "([^"]*)" exists$/
      */
-    public function fileIsInDirectory()
+    public function directoryExists($arg1)
     {
-        if (file_exists($this->file)) {
-            echo "The file is in directory";
+        if (!file_exists($arg1)) {
+            mkdir($arg1);
+        }
+
+        $this->dir = $arg1;
+    }
+
+    /**
+     * @Given /^I have a file named "([^"]*)"$/
+     */
+    public function iHaveAFileNamed($arg1)
+    {
+        if(!file_exists($this->dir."/".$arg1)) {
+            copy("img/".$arg1, $this->dir."/".$arg1);
+        }
+        $this->file = $arg1;
+    }
+
+    /**
+     * @When /^I do filesize$/
+     */
+    public function iDoFilesize()
+    {
+        $this->fileSize = filesize($this->dir."/".$this->file);
+    }
+
+    /**
+     * @Then /^I should see "([^"]*)"$/
+     */
+    public function iShouldSee($arg1)
+    {
+        if($this->fileSize >= $this->maxFileSize) {
+            throw new Exception(
+                "File size is " . ($this->fileSize/128) . "kb"
+            );    
         }
     }
-
-    /**
-     * @Given /^file size is less then (\d+)kb$/
-     */
-    public function fileSizeIsLessThenKb($arg1)
-    {
-        if (fileSize($this->file) < $this->fileSize) {
-            
-        }
-    }
-
-    /**
-     * @When /^I do "([^"]*)"$/
-     */
-    public function iDo($arg1)
-    {
-        
-    }
-
-    /**
-     * @Then /^I should get:$/
-     */
-    public function iShouldGet(PyStringNode $string)
-    {
-        
-    }
-
 }
